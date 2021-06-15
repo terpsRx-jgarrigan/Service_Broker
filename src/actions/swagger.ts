@@ -1,4 +1,4 @@
-import { Action, config, api } from "actionhero";
+import { Action, config, api, log } from "actionhero";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -7,6 +7,13 @@ const API_VERSION = ""; // if you need a prefix to your API routes, like `v1`
 const parentPackageJSON = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "..", "package.json")).toString()
 );
+const IGNORED_ROUTES = [
+  '/status',
+  '/swagger',
+  '/createChatRoom',
+  '/mark-rx-batch-loaded',
+  '/rx-batch-info-by-device/{device_id}'
+];
 
 const responses = {
   200: {
@@ -85,6 +92,11 @@ export class Swagger extends Action {
           .replace(/\/:(\w*)/, "/{$1}")
           .replace(/\/:(\w*)/, "/{$1}")
           .replace(/\/:(\w*)/, "/{$1}");
+
+        log(formattedPath, "info", this.name);
+        if (IGNORED_ROUTES.includes(formattedPath)) {
+          return;
+        }
 
         swaggerPaths[formattedPath] = swaggerPaths[formattedPath] || {};
         swaggerPaths[formattedPath][method] = {

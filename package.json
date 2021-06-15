@@ -1,7 +1,7 @@
 {
-   "author": "YOU <YOU@example.com>",
-   "name": "my_actionhero_project",
-   "description": "my actionhero project",
+   "author": "Joseph Garrigan <jgarrigan@terpsrx.com>",
+   "name": "Medherent_Service_Broker",
+   "description": "API wrapping Medherent core applications",
    "version": "0.1.0",
    "engines": {
       "node": ">=8.0.0"

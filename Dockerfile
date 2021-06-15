@@ -12,6 +12,6 @@ COPY --chown=node:node . .
 # build the application 
 RUN npm install
 # expose our application port
-EXPOSE 8080
+EXPOSE 80 443
 # issue the run command
 CMD [ "npm", "run", "start" ]

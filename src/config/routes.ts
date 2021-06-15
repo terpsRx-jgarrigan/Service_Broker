@@ -6,9 +6,12 @@ export const DEFAULT = {
         { path: "/swagger", action: "swagger" },
         { path: "/createChatRoom", action: "createChatRoom" },
         { path: "/rx-batch-info-by-device/:device_id", action: "rx_batch_details_by_device_id" },
+        { path: "/supported-mar-systems", action: "Get_Mar_Systems" },
+        { path: "/supported-mar-systems/:system_id/endpoints", action: "Get_Mar_System_Endpoints" }
       ],
       post: [
         { path: "/mark-rx-batch-loaded", action: "mark_batch_loaded" },
+        { path: "/mar-message", action: "Mar_Message" },
       ]
       /* ---------------------
       For web clients (http and https) you can define an optional RESTful mapping to help route requests to actions.
