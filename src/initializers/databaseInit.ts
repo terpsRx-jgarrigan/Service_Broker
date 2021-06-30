@@ -21,6 +21,15 @@ export class databaseInitializer extends Initializer {
       password: process.env.MYSQL_PASSWORD,
       database: process.env.MYSQL_DATABASE
     });
+    api.db_conn_mgr.create({
+      name: "read-only-replica",
+      type: "mysql",
+      host: process.env.MYSQL_READ_ONLY_REPLICA_HOST,
+      port: process.env.MYSQL_READ_ONLY_REPLICA_MYSQL_PORT,
+      username: process.env.MYSQL_READ_ONLY_REPLICA_MYSQL_USER,
+      password: process.env.MYSQL_READ_ONLY_REPLICA_MYSQL_PASSWORD,
+      database: process.env.MYSQL_READ_ONLY_REPLICA_MYSQL_DATABASE
+    });
   }
 
   async start() {}

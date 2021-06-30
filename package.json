@@ -8,9 +8,11 @@
    },
    "dependencies": {
       "actionhero": "latest",
+      "bcrypt": "^5.0.1",
       "dotenv": "latest",
       "ioredis": "latest",
       "ioredis-mock": "latest",
+      "jsonwebtoken": "^8.5.1",
       "mysql": "latest",
       "reflect-metadata": "latest",
       "typeorm": "latest",
