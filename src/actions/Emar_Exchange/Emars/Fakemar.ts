@@ -1,3 +1,4 @@
+import { sourceRelativeLinkPath } from "actionhero/dist/modules/utils/sourceRelativeLinkPath";
 import { Emar_Exchange_Action } from "./../../Parents/Emar_Exchange_Action";
 
 class HL7_Parse {
@@ -37,6 +38,10 @@ class HL7_Parse {
 }
 
 abstract class FakeMAR_Action extends Emar_Exchange_Action {
+  
+  /**
+   * Name this emar application
+   */
   constructor() {
     super();
     this.emar_id =1;
@@ -63,7 +68,7 @@ export class User_Registration extends FakeMAR_Action {
     this.version = 1;
   }
 
-  async run (data) {
+  async exec (data?: any) {
     return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
   }
 }
@@ -86,7 +91,7 @@ export class Consumer_Registration extends FakeMAR_Action {
     this.version = 1;
   }
 
-  async run (data) {
+  async exec (data) {
     return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
   }
 }
@@ -111,7 +116,7 @@ then again whenever the dispense times change.";
     this.version = 1;
   }
 
-  async run (data) {
+  async exec (data) {
     return { hl7: encodeURI("MSA|AA|Mock Response") };
   }
 }
@@ -134,7 +139,7 @@ export class Medpass_Event extends FakeMAR_Action {
     this.version = 1;
   }
 
-  async run(data) {
+  async exec(data) {
     return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
   }
 }
@@ -158,7 +163,7 @@ FakeMAR - Respective header segment only.";
     this.version = 1;
   }
 
-  async run (data) {
+  async exec (data) {
     return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
   }
 }
@@ -181,7 +186,7 @@ export class On_Leave extends FakeMAR_Action {
     this.version = 1;
   }
 
-  async run (data) {
+  async exec (data) {
     return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
   }
 }
@@ -206,7 +211,7 @@ Suspend Mode, that dispense operations are no longer suspended.";
     this.version = 1;
   }
 
-  async run (data) {
+  async exec (data) {
     return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
   }
 }
@@ -233,7 +238,7 @@ dose time to override.";
     this.version = 1;
   }
 
-  async run (data) {
+  async exec (data) {
     return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
   }
 }
@@ -256,7 +261,7 @@ export class Deactivate_User extends FakeMAR_Action {
     this.version = 1;
   }
 
-  async run (data) {
+  async exec (data) {
     return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
   }
 }

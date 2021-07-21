@@ -2,25 +2,24 @@ import { action, Action } from "actionhero";
 import * as fs from "fs";
 
 export abstract class JWT_Action extends Action {
+
   /**
-   * does this action require the user to be logged in?
+   * whether or not to execute the JWT_Auth middleware
    */
   jwt_verified: boolean;
+
   constructor(){
     super();
     this.name = "JWT_Action";
-    this.description = "JWT authenticated actions";
+    this.description = "Adds middleware to ensure a vaild JWT token was received";
   }
-  
-  /**
-   * @param data
-   * @returns Promise<any> 
-   */
-   async run (data: any) {
-    data.response.ok = true;
-  }
+
+  async run (data?: any) {}
 }
 
+/**
+ * Verify that a json web token was received and is valid
+ */
 action.addMiddleware({
   name: "JWT_Auth", 
   global: true,

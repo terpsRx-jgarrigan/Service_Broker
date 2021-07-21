@@ -1,0 +1,177 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: This template creates an ECS cluster and service
+
+Parameters:
+  StackName:
+    Type: String
+    Default: 'service-broker-test-env'
+    MinLength: 1
+    Description: The name of the cloudformation stack that created the network and elasticache
+    AllowedValues: ["service-broker-test-env"]
+  LaunchType:
+    Type: String
+    Default: 'FARGATE'
+    Description: Deploy to FARGATE
+    AllowedValues: [FARGATE]
+
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+  ECSServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+        - PolicyName: ecs-service
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action: ['elasticloadbalancing:DeregisterInstancesFromLoadBalancer', 'elasticloadbalancing:DeregisterTargets',
+                'elasticloadbalancing:Describe*', 'elasticloadbalancing:RegisterInstancesWithLoadBalancer', 
+                'elasticloadbalancing:RegisterTargets', 'ec2:Describe', 'ec2:AuthorizeSecurityGroupIngress', 's3:*']
+              Resource: '*'
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal: 
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies: 
+      - PolicyName: ecs-service
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+              - ecr:GetAuthorizationToken
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - s3:*
+            Resource: '*'
+  ECSALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+      - Key: idle_timeout.timeout_seconds
+        Value: '30'
+      Subnets:
+        - "subnet-07af7eed815e494dc"
+        - "subnet-008b29f3b787e5ab3"
+      SecurityGroups: 
+        - "sg-02d17ad061df224a0"
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: ECSServiceRole
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn: !Ref 'BackendECSTG'
+      LoadBalancerArn: !Ref 'ECSALB'
+      Port: '80'
+      Protocol: HTTP
+  ECSALBBackendListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: ALBListener
+    Properties: 
+      Actions:
+      - Type: forward
+        TargetGroupArn: !Ref 'BackendECSTG'
+      Conditions:
+      - Field: path-pattern
+        Values: [/socket*]
+      ListenerArn: !Ref 'ALBListener'
+      Priority: 1
+  BackendECSTG:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: ECSALB
+    Properties:
+      HealthCheckIntervalSeconds: 60
+      HealthCheckPath: /api/status
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      TargetGroupAttributes:
+      - Key: stickiness.enabled
+        Value: 'true'
+      VpcId: "vpc-02760bf21c0c4471a"
+      TargetType: ip
+  CloudwatchLogsGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "ECSLogGroup-service-broker-test-env"
+      RetentionInDays: 14
+  taskdefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: "service-broker-test-env-ecs-backend"
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: 256
+      Memory: 1GB
+      ExecutionRoleArn: !GetAtt ECSTaskRole.Arn
+      ContainerDefinitions:
+      - Name: backend
+        Cpu: 10
+        Essential: true
+        Image: "290781573934.dkr.ecr.us-east-1.amazonaws.com/service-broker-test-env-backend:latest"
+        Memory: 1024
+        EnvironmentFiles: 
+          - Type: "s3"
+            Value: "arn:aws:s3:::serverice-broker-test-env-environment-file/test_environment.env"
+        Environment:
+        - Name: REDIS_HOST
+          Value: "ser-re-198cwb7k7rcgo.fezpis.0001.use1.cache.amazonaws.com"
+        - Name: REDIS_PORT
+          Value: "6379"
+        LogConfiguration:
+          LogDriver: awslogs
+          Options: 
+            awslogs-group: !Ref 'CloudwatchLogsGroup'
+            awslogs-region: "us-east-1"
+            awslogs-stream-prefix: "service-broker-test-env"
+        PortMappings:
+        - ContainerPort: 8080
+  backendService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - ALBListener
+      - ECSALBBackendListenerRule
+    Properties:
+      Cluster: !Ref 'ECSCluster'
+      DesiredCount: '1'
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups: 
+          - "sg-02c79bb16b8aa660a"
+          Subnets:
+          - "subnet-0e4b47a14a7214544"
+          - "subnet-0620c0b8e22473ec5"
+      LoadBalancers:
+      - ContainerName: backend
+        ContainerPort: '8080'
+        TargetGroupArn: !Ref 'BackendECSTG'
+      TaskDefinition: !Ref 'taskdefinition'
+Outputs:
+  AppUrl:
+    Description: Application Endpoint
+    Value: !GetAtt ECSALB.DNSName

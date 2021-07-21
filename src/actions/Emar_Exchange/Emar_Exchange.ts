@@ -1,4 +1,5 @@
 import { api } from "actionhero";
+import { Emar_Exchange_Action } from "../Parents/Emar_Exchange_Action";
 import { Application_Action } from "./../Parents/Application_Action";
 
 class Exchange_Application {
@@ -17,7 +18,7 @@ function Get_Distinct_Emars () {
   let response_arr = [];
   Object.keys(api.actions.actions).forEach((actionName) => {
     Object.keys(api.actions.actions[actionName]).forEach((version) => {
-      const action = api.actions.actions[actionName][version];
+      const action = <Emar_Exchange_Action>api.actions.actions[actionName][version];
       if (
         typeof action.application_name == "string" && 
         action.application_name == 'Emar_Exchange' &&
@@ -41,7 +42,7 @@ function Get_Emar_Endpoints (emar: string) {
   let endpoints = [];
   Object.keys(api.actions.actions).forEach((actionName) => {
     Object.keys(api.actions.actions[actionName]).forEach((version) => {
-      const action = api.actions.actions[actionName][version];
+      const action = <Emar_Exchange_Action>api.actions.actions[actionName][version];
       if (
         typeof action.application_name == "string" && 
         action.application_name == 'Emar_Exchange' &&
@@ -110,9 +111,8 @@ export class Emar_Exchange_Execute extends Application_Action {
   async run(data) {
     try {
       const action = Get_Emar_Action(data.params.endpoint);
-      let resp = await action.run(data.params.hl7);
+      data.response.body = await action.exec(data.params.hl7);
       data.response.ok = true;
-      data.response.body = resp;
     } catch (err) {
       data.response.ok = false;
       data.response.body = err;
