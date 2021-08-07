@@ -32,3 +32,9 @@ cache.dump
 /nbproject/*
 /.idea/*
 /.vscode/
+
+# MySQL
+./mysql/mysql-data/*
+
+# TypeORM
+./ormconfig.env
