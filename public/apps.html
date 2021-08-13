@@ -1,0 +1,274 @@
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="content-language" content="en" />
+    <meta name="description" content="Service-Broker" />
+    <link rel="stylesheet" href="/public/css/cosmo.css" type="text/css" />
+    <link rel="icon" href="/public/favicon.ico" />
+    <title>Service-Broker</title>
+    <script 
+      src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js" 
+      integrity="sha512-nOQuvD9nKirvxDdvQ9OMqe2dgapbPB7vYAMrzJihw5m+aNcf0dX53m6YxM4LgA9u8e9eg9QX+/+mPu8kCNpV2A==" 
+      crossorigin="anonymous" 
+      referrerpolicy="no-referrer">
+    </script>
+  </head>
+
+  <body>
+    <div
+      class="alert alert-warning"
+      style="
+        display: none;
+        font-weight: bold;
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        z-index: 9999;
+      "
+      id="error-container"
+    >
+      <p id="error" />
+    </div>
+    <div class="container">
+      <br />
+      <div class="jumbotron">
+        <div class="row">
+          <div class="col-md-4">
+            <img src="/public/logo/medherent.png" style="max-width: 100%;" />
+          </div>
+          <div class="col-md-8">
+            <div class="row">
+              <div class="col-md-8">
+                <h1>Medherent Service Broker</h1>
+              </div>
+              <div class="col-md-4" style="padding-top: 1.2%;" >
+                <button 
+                  id="login_btn"
+                  class="btn btn-outline-primary" 
+                  onclick="show_login();"
+                  >Login</button
+                >
+              </div>
+            </div>
+            <br />
+            <br /> 
+            <div id="login" class="form-group row" style="display: none;">
+              <div class="col-sm-12">
+                <label for="user" class="col-sm-2 col-form-label">User:</label>
+                <div class="col-sm-10">
+                  <input type="email" class="form-control" id="user" placeholder="username">
+                </div>
+                <label for="pass" class="col-sm-2 col-form-label">Password:</label>
+                <div class="col-sm-10">
+                  <input type="password" class="form-control" id="pass">
+                </div>
+                <div class="col-sm-2"><br /></div>
+                <div class="col-sm-10">
+                  <button type="button" id="authenticate_btn" onclick="authenticate();" class="btn btn-small btn-outline-primary">Login</button>
+                  <button 
+                  id="switch_btn"
+                  class="btn btn-small btn-outline-secondary"
+                  onClick="register_login_switch();"
+                  >Switch to Register</button
+                >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <br />
+      <!-- Resources and Docs -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card border-primary">
+            <div class="card-header">Resources | Documentation</div>
+            <div class="card-body">
+              <!-- Frameworks and Libraries -->
+              <div class="row">
+                <div class="col-md-4 text-center">
+                  <a
+                    href="https://www.actionherojs.com"
+                    target="_blank"
+                    class="btn btn-outline-info"
+                    >Actionherojs Framework</a
+                  >
+                </div>
+                <div class="col-md-4 text-center">
+                  <a
+                    href="https://typeorm.io/#/"
+                    target="_blank"
+                    class="btn btn-outline-info"
+                    >TypeORM Framework</a
+                  >
+                </div>
+                <div class="col-md-4 text-center">
+                  <a 
+                    href="https://bootswatch.com/cosmo/"
+                    target="_blank"
+                    class="btn btn-outline-info"
+                    >Bootswatch: Cosmo</a
+                  >
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-2"></div>
+                <div class="col-md-4 text-center">
+                  <a 
+                    href="https://github.com/kelektiv/node.bcrypt.js#readme"
+                    target="_blank"
+                    class="btn btn-outline-info"
+                    >Bcrypt</a
+                  >
+                </div>
+                <div class="col-md-4 text-center">
+                  <a 
+                    href="https://cryptojs.gitbook.io/docs/"
+                    target="_blank"
+                    class="btn btn-outline-info"
+                    >CryptoJS</a
+                  >
+                </div>
+                <div class="col-md-2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <br />
+      <!-- Server Information -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card border-primary">
+            <div class="card-header">This Server</div>
+            <div class="card-body">
+              <pre class="card-text">
+  Server Name:        <span class="right" id="serverName">...</span>
+  Server ID:          <span class="right" id="serverId">...</span>
+  API Version:        <span class="right" id="serverVersion">...</span>
+  Actionhero Version  <span class="right" id="actionheroVersion">...</span>
+  Uptime (min):       <span class="right" id="uptime">...</span>
+  Memory Consumed:    <span class="right" id="consumedMemoryMB">...</span>
+            </pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+
+      let is_login_switch = true;
+      let jwt = undefined;
+      
+      /** Functions to display messages in top banner */
+      const show_result = function (result) {
+        let element = document.getElementById("error-container");
+        element.style.display = "block";
+        element.innerHTML = "<pre>"+JSON.stringify(result)+"</pre>";
+        setTimeout(function() {
+          hide_result();
+        }, 5000);
+      }
+
+      const hide_result = function () {
+        let element = document.getElementById("error-container");
+        element.style.display = "none";
+        element.innerHTML="";
+      }
+      /** end */
+      
+      const show_login = function () {
+        let login = document.getElementById("login");
+        let btn = document.getElementById("login_btn");
+        if (login.style.display === "none") {
+          login.style.display = "block";
+          btn.classList = "btn btn-outline-danger";
+          btn.textContent = "Cancel";
+        } else {
+          login.style.display = "none";
+          btn.classList = "btn btn-outline-primary";
+          btn.textContent = "Login";
+        }
+      }
+
+      const show_logout = function () {
+        let login = document.getElementById("login");
+        let btn = document.getElementById("login_btn");
+        btn.classList = "btn btn-outline-secondary";
+        btn.textContent = "Log Out";
+        btn.setAttribute('onclick', "javascript: logout();");
+        login.style.display = "none";
+      }
+
+      const logout = function () {
+        localStorage.removeItem('jwt');
+        show_login();
+      }
+
+      const register_login_switch = function () {
+        let btn = document.getElementById("authenticate_btn");
+        let switch_btn = document.getElementById("switch_btn");
+        if (is_login_switch) {
+          btn.setAttribute('onclick', "javascript: register();");
+          btn.textContent = "Register";
+          switch_btn.textContent = "Switch to Login";
+        } else {
+          btn.setAttribute('onclick', "javascript: authenticate();");
+          btn.textContent = "Login";
+          switch_btn.textContent = "Switch to Register";
+        }
+        is_login_switch = !is_login_switch;
+      }
+
+      const authenticate = async function () {
+        const hash = CryptoJS.SHA3(document.getElementById('pass').value).toString(CryptoJS.enc.Base64);
+        const user = document.getElementById('user').value;
+        let response = await fetch('/api/authenticate', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json;charset=utf-8',
+            'Authorization': 'Basic' + btoa( user + ":" + hash)
+          }
+        })
+          .then(response => response.json());
+        localStorage.setItem('jwt', response.body);
+        show_result({message: "Authenticated Successfully"});
+        show_logout();
+      }
+
+      const register = async function () {
+        const hash = CryptoJS.SHA3(document.getElementById('pass').value).toString(CryptoJS.enc.Base64);
+        const user = document.getElementById('user').value;
+        let response = await fetch('/api/register', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json;chart=utf-8',
+            'Authorization': 'Basic' + btoa( user + ":" + hash)
+          }
+        })
+          .then(register_login_switch())
+          .then(() => { document.getElementById("switch_btn").style.display = "none"; });
+        show_result({message: "Registered Successfully"});
+      }
+      
+      var populateStatus = function (data) {
+        document.getElementById("serverVersion").innerHTML = data.version;
+        document.getElementById("serverName").innerHTML = data.name;
+        document.getElementById("serverId").innerHTML = data.id;
+        document.getElementById("actionheroVersion").innerHTML =
+          data.actionheroVersion;
+        document.getElementById("uptime").innerHTML = Math.round(
+          data.uptime / 1000 / 60
+        );
+        document.getElementById("consumedMemoryMB").innerHTML =
+          data.consumedMemoryMB + "MB";
+      };
+
+      fetch("/api/status")
+        .then((response) => response.json())
+        .then((data) => populateStatus(data));
+    </script>
+  </body>
+</html>

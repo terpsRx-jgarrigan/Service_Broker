@@ -8,7 +8,9 @@
    },
    "dependencies": {
       "actionhero": "latest",
+      "aes-js": "^3.1.2",
       "bcrypt": "^5.0.1",
+      "crypto": "^1.0.1",
       "dotenv": "latest",
       "ioredis": "latest",
       "ioredis-mock": "latest",
@@ -26,9 +28,9 @@
       "jest": "latest",
       "prettier": "latest",
       "ts-jest": "latest",
+      "ts-node": "^10.1.0",
       "ts-node-dev": "latest",
-      "typescript": "latest",
-      "ts-node": "latest"
+      "typescript": "latest"
    },
    "scripts": {
       "postinstall": "npm run build",
@@ -40,7 +42,8 @@
       "pretest": "npm run build && npm run lint",
       "build": "tsc --sourceMap false --declaration",
       "lint": "prettier --check src/*/** __tests__/*/**",
-      "pretty": "prettier --write src/*/** __tests__/*/**"
+      "pretty": "prettier --write src/*/** __tests__/*/**",
+      "typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js"
    },
    "jest": {
       "testEnvironment": "node",

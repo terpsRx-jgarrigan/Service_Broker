@@ -1,0 +1,172 @@
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="content-language" content="en" />
+    <meta name="description" content="Service-Broker" />
+    <link rel="stylesheet" href="/public/css/cosmo.css" type="text/css" />
+    <link rel="icon" href="/public/favicon.ico" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.2.4/css/buttons.dataTables.min.css">
+    <title>Service-Broker</title>
+    </script>
+  </head>
+
+  <body>
+    <div
+      class="alert alert-warning"
+      style="
+        display: none;
+        font-weight: bold;
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        z-index: 9999;
+      "
+      id="error-container"
+    >
+      <p id="error" />
+    </div>
+    <div class="container">
+      <br />
+      <div class="jumbotron">
+        <div class="row">
+          <div class="col-md-4">
+            <img src="/public/logo/logo192.png" style="max-width: 100%;" />
+          </div>
+          <div class="col-md-8">
+            <div class="row">
+              <div class="col-md-8 text-left">
+                <h1>Medherent Service Broker</h1>
+              </div>
+              <div class="col-md-4 text-left">
+                <h1>Fmars</h1>
+              </div>
+            </div>
+          </div>
+        </div>
+        <br />
+        <br />
+        <div class="row">
+          <div class="col-md-12 text-center">
+            <table id="fmarsTable" class="display" style="width:100%">
+              <thead>
+                <tr>
+                  <th> Fakemar ID </th>
+                  <th> Patient Code </th>
+                  <th> Username </th>
+                  <th> First Name </th>
+                  <th> Last Name </th>
+                  <th> Date of Birth </th>
+                  <th> Last 4 SSN </th>
+                  <th> Schedule </th>
+                  <!--<th> Info </th>-->
+                  <!--<th> Operations </th>-->
+                </tr>
+              </thead>
+              <tfoot>
+                <tr>
+                  <th> Fakemar ID </th>
+                  <th> Patient Code </th>
+                  <th> Username </th>
+                  <th> First Name </th>
+                  <th> Last Name </th>
+                  <th> Date of Birth </th>
+                  <th> Last 4 SSN </th>
+                  <th> Schedule </th>
+                  <!--<th> Info </th>-->
+                  <!--<th> Operations </th>-->
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+       <!--Import jQuery before export.js-->
+       <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+
+       <!--Data Table-->
+       <script type="text/javascript"  src=" https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+       <script type="text/javascript"  src=" https://cdn.datatables.net/buttons/1.2.4/js/dataTables.buttons.min.js"></script>
+   
+       <!--Export table buttons-->
+       <script type="text/javascript"  src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
+       <script type="text/javascript" src="https://cdn.rawgit.com/bpampuch/pdfmake/0.1.24/build/pdfmake.min.js" ></script>
+       <script type="text/javascript"  src="https://cdn.rawgit.com/bpampuch/pdfmake/0.1.24/build/vfs_fonts.js"></script>
+       <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.4/js/buttons.html5.min.js"></script>
+       <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.1/js/buttons.print.min.js"></script>
+
+    <script type="text/javascript">
+      var editor;
+      $(document).ready(function() {
+        editor = new $.fn.dataTable.Editor({
+          ajax: {
+            "url": "/api/fakemar/fmar/update",
+            "type": "POST",
+            "beforeSend": function (xhr) {
+              xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('jwt'));
+            }
+          },
+          table: "#fmarsTable",
+          fields: [ {
+            label: "Fakemar ID",
+            name: "id"
+          }, {
+            label: "Username",
+            name: "username",
+          }, {
+            label: "First Name",
+            name: "firstName",
+          }, {
+            label: "Last Name",
+            name: "lastName",
+          }, {
+            label: "Date of Birth",
+            name: "dob",
+          }, {
+            label: "Last 4 SSN",
+            name: "last_4_ssn",
+          }, {
+            label: "Schedule",
+            name: "schedule",
+          }]
+        });
+        $('#fmarsTable').on('click', 'tbody td:not(:first-child)', function (e) {
+          editor.inline(this);
+        });
+        $('#fmarsTable').DataTable( {
+          "dom": "Bfrtip",
+          "ajax": {
+            "url": "/api/fakemar/fmars/read",
+            "beforeSend": function (xhr) {
+              xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('jwt'));
+            },
+            "dataSrc": "body"
+          },
+          "columns": [
+            { "data": "patient_code" },
+            { "data": "username" },
+            { "data": "firstName" },
+            { "data": "lastName" },
+            { "data": "dob" },
+            { "data": "last_4_ssn" },
+            { "data": "schedule" },
+            //{ "data": "info" }
+          ],
+          "select": {
+            "style": 'os',
+            "selector": 'td:first-child'
+          },
+          "buttons": [
+            { extend: "create", editor: editor },
+            { extend: "edit", editor: editor },
+            { extend: "remove", editor: editor }
+          ]
+        });
+      });
+    </script>
+  </body>
+</html>
+ 

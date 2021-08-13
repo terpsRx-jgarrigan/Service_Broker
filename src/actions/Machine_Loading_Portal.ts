@@ -1,5 +1,5 @@
-import { Action, api, log } from "actionhero";
-
+import { api, log } from "actionhero";
+import {Application_Action} from "./Parents/Application_Action";
 class Machine_Loading_Portal_Response_Body {
   public patient_id = "";
   public medherent_id = "";
@@ -30,7 +30,7 @@ class Machine_Loading_Portal_Response_Body {
   }
 }
 
-export class Get_Medherent_ID_Load_Details extends Action {
+export class Get_Medherent_ID_Load_Details extends Application_Action {
   constructor() {
     super();
     this.name = "Get_Medherent_ID_Load_Details";
@@ -54,7 +54,6 @@ export class Get_Medherent_ID_Load_Details extends Action {
         },
       }
     };
-    this.middleware = ["JWT_Auth"];
   }
   
   async run(data) {
@@ -72,11 +71,11 @@ export class Get_Medherent_ID_Load_Details extends Action {
       b.remainder_count, \
       f.created_at as uploaded_at, \
       l.id as load_id \
-    from rx_batch_files.patients p \
-      join rx_batch_files.loads l on p.id = l.patient_id \
-      join rx_batch_files.batch_file_linking bfl on l.batch_file_linking_id = bfl.id \
-      join rx_batch_files.batches b on bfl.batch_id = b.id \
-      join rx_batch_files.files f on bfl.file_id = f.id \
+    from msb_mlp.patients p \
+      join msb_mlp.loads l on p.id = l.patient_id \
+      join msb_mlp.batch_file_linking bfl on l.batch_file_linking_id = bfl.id \
+      join msb_mlp.batches b on bfl.batch_id = b.id \
+      join msb_mlp.files f on bfl.file_id = f.id \
       where p.medherent_id = ? \
       and l.load_complete = 0";
     const query_result = await connection.query(statement, [data.params.medherent_id]);
@@ -91,7 +90,7 @@ export class Get_Medherent_ID_Load_Details extends Action {
   }
 }
 
-export class Mark_Load_As_Loaded extends Action {
+export class Mark_Load_As_Loaded extends Application_Action {
   constructor() {
     super();
     this.name = "Mark_Load_As_Loaded";
@@ -113,6 +112,7 @@ export class Mark_Load_As_Loaded extends Action {
       }
     };
   }
+  
   async run(data) {
     const connection = api.db_conn_mgr.get("default");
     if (connection.isConnected === false) {
@@ -128,10 +128,10 @@ export class Mark_Load_As_Loaded extends Action {
     if (data.params.has_remainders === true) {
       has_remainders = 1;
     }
-    statement = "update rx_batch_files.batches set ever_been_loaded = 1, \
+    statement = "update msb_mlp.batches set ever_been_loaded = 1, \
       has_remainders = ?, remainder_count = ? where id = (select batch_id from \
-      rx_batch_files.batch_fil_linking where id = (select batch_file_linking_id \
-      from rx_batch_files.loads where id = ?))";
+      msb_mlp.batch_file_linking where id = (select batch_file_linking_id \
+      from msb_mlp.loads where id = ?))";
     query_result = await connection.query(statement, 
       [has_remainders, data.params.remainder_count, data.params.load_id]);
     let batch_updated = false;

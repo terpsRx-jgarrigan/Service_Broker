@@ -1,11 +1,28 @@
-import { sourceRelativeLinkPath } from "actionhero/dist/modules/utils/sourceRelativeLinkPath";
 import { Emar_Exchange_Action } from "./../../Parents/Emar_Exchange_Action";
+import { getRepository, Repository } from "typeorm";
+import { Fmar } from "./../../../entities/Fmar";
+import { alterTableFakemarFmarsAddUsernameField1628801124049 } from "../../../migrations/1628801124049-alter_table_fakemar_fmars_add_username_field";
 
+/**
+ * Tool to interpret HL7 text
+ */
 class HL7_Parse {
   
+  /**
+   * Splits the string on a provided delimiter 
+   * @param string 
+   * @param delimiter 
+   * @returns 
+   */
   private split_on_char(string, delimiter) {
     return ((string.search(delimiter) > -1) ? string.split(delimiter) : string);
   }
+
+  /**
+   * Orchestrates the deconstruction of the provided segment
+   * @param string 
+   * @returns 
+   */
   private parse_segment(string) {
     let array = this.split_on_char(string, "|");
     for (let i = 0; i < array.length; i++) {
@@ -28,6 +45,12 @@ class HL7_Parse {
     }
     return array;
   }
+
+  /**
+   * Orchestrates the deconstruction of the provided message
+   * @param hl7 
+   * @returns 
+   */
   public inflate(hl7) {
     let message = hl7.split(/\r\n|\n\r|\n|\r/g);
     for(let i = 0; i < message.length; i++) {
@@ -37,7 +60,16 @@ class HL7_Parse {
   }
 }
 
+/**
+ * Defines the class properties for an Emar Exchange registered interface
+ */
 abstract class FakeMAR_Action extends Emar_Exchange_Action {
+
+  parser: HL7_Parse;
+  /**
+   * YYYYmmddHHiiss
+   */
+  todayString: String;
   
   /**
    * Name this emar application
@@ -46,6 +78,14 @@ abstract class FakeMAR_Action extends Emar_Exchange_Action {
     super();
     this.emar_id =1;
     this.emar_name = "FakeMAR";
+    const today = new Date();
+    this.todayString = today.getFullYear() + 
+      String(today.getMonth()+1).padStart(2, '0') + 
+      String(today.getDate()).padStart(2,'0') +
+      String(today.getHours()) +
+      String(today.getMinutes()) +
+      String(today.getSeconds());
+    this.parser = new HL7_Parse();
   }
 }
 
@@ -69,7 +109,21 @@ export class User_Registration extends FakeMAR_Action {
   }
 
   async exec (data?: any) {
-    return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
+    const hl7 = this.parser.inflate(decodeURIComponent(data.params.hl7));
+    const fmarRepository = getRepository(Fmar);
+    const username = hl7[0][20][0];
+    const fmar = await fmarRepository.find({ where: {username: username}});
+    let fmar_id = "";
+    let response_code = "AA";
+    let response_msg = "Accepted";
+    if (fmar.length === 0) {
+      response_code = "ER1";
+      response_msg = " User Name not found";
+    } else {
+      fmar_id = String(fmar[0].id);
+    }
+    return { hl7: encodeURIComponent("MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||ADT^A02|-1||2.5||||||ASCII|%250A|&#xD; \
+    MSA|"+response_code+"|"+response_msg+"|"+fmar_id+"|&#xD;") };
   }
 }
 
@@ -92,7 +146,38 @@ export class Consumer_Registration extends FakeMAR_Action {
   }
 
   async exec (data) {
-    return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
+    const hl7 = this.parser.inflate(decodeURIComponent(data.params.hl7));
+    const fmarRepository = getRepository(Fmar);
+    let response_code = "AA";
+    let response_msg = "Accepted";
+    let return_hl7 = "MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||ADT^A01|-1||2.5||||||ASCII|%250A|&#xD; \
+    ";
+    const aesjs = require('aes-js');
+    const aesCtr = new aesjs.ModeOfOperation.ctr(process.env.APP_PII_SECRET.split(',').map(Number), new aesjs.Counter(5));
+    const dobBytes = aesjs.utils.utf8.toBytes(hl7[0][24][0]);
+    const last_4_ssnBytes = aesjs.utils.utf8.toBytes(hl7[0][40][0]);
+    const dobEncryptBytes = aesCtr.encrypt(dobBytes);
+    const last_4_ssnEncryptBytes = aesCtr.encrypt(last_4_ssnBytes);
+    const dobEncryptedHex = aesjs.utils.hex.fromBytes(dobEncryptBytes);
+    const last_4_ssnEncryptedHex = aesjs.utils.hex.fromBytes(last_4_ssnEncryptBytes);
+    const fmar = await fmarRepository.find({ where: {lastName: hl7[0][23][0], dob: dobEncryptedHex, last_4_ssn: last_4_ssnEncryptedHex}});
+    if (fmar.length === 0) {
+      response_code = "ER1";
+      response_msg = "Consumer not found";
+      return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD;";
+      return { hl7: encodeURIComponent(return_hl7) };
+    }
+    return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD; \
+    PID|1||"+fmar[0].patient_code+"|"+fmar[0].id+"|"+fmar[0].lastName+"|"+hl7[0][24][0]+"||||||||||||||||"+hl7[0][40][0]+"||&#xD; \
+    PV1|1||FakeMAR ^^^Annapolis|&#xD; \
+    ";
+    if (fmar[0].schedule.length > 0) {
+      for (let i = 0; i < fmar[0].schedule.length; i++) {
+        return_hl7 += "TQ1|"+i+"|||"+fmar[0].schedule[i]+"|||&#xD; \
+        ";
+      }
+    }
+    return { hl7: encodeURIComponent(return_hl7) };
   }
 }
 
@@ -117,7 +202,30 @@ then again whenever the dispense times change.";
   }
 
   async exec (data) {
-    return { hl7: encodeURI("MSA|AA|Mock Response") };
+    const hl7 = this.parser.inflate(decodeURIComponent(data.params.hl7));
+    const fmarRepository = getRepository(Fmar);
+    let response_code = "AA";
+    let response_msg = "Accepted";
+    let return_hl7 = "MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||ADT^A01|-1||2.5||||||ASCII|%250A|&#xD; \
+    ";
+    const fmar = await fmarRepository.find({ where: {id: hl7[0][22][0]}});
+    if (fmar.length === 0) {
+      response_code = "ER1";
+      response_msg = "Consumer not found";
+      return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD;";
+      return { hl7: encodeURIComponent(return_hl7) };
+    }
+    return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD; \
+    PID|1|||"+fmar[0].id+"||||||||||||||||||||&#xD; \
+    &#xD; \
+    ";
+    if (fmar[0].schedule.length > 0) {
+      for (let i = 0; i < fmar[0].schedule.length; i++) {
+        return_hl7 += "TQ1|"+i+"|||"+fmar[0].schedule[i]+"|||&#xD; \
+        ";
+      }
+    }
+    return { hl7: encodeURI(return_hl7) };
   }
 }
 
@@ -140,7 +248,9 @@ export class Medpass_Event extends FakeMAR_Action {
   }
 
   async exec(data) {
-    return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
+    const hl7 = this.parser.inflate(decodeURIComponent(data.params.hl7));
+    return { hl7: encodeURIComponent("MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||RDS^O13|-1||2.5||||||ASCII|%250A|&#xD; \
+    MSA|AA|Accepted|&#xD;") };
   }
 }
 

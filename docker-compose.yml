@@ -15,18 +15,21 @@ services:
                 ipv4_address: ${REDIS_HOST}
     mysql:
         image: "mysql:latest"
+        restart: always
+        command: --default-authentication-plugin=mysql_native_password
         ports: 
             - ${HOST_PORT_MYSQL}:${MYSQL_PORT}
+        volumes:
+            - "./mysql/conf.d:/etc/mysql/conf.d"
+            - "./mysql/mysql-data:/var/lib/mysql"
         environment:
             MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
             MYSQL_USER: ${MYSQL_USER}
-            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
             MYSQL_DATABASE: ${MYSQL_DATABASE}
         networks:
             node_net:
-                ipv4_address: 172.28.1.5
+                ipv4_address: ${MYSQL_HOST}
     node_app:
-        build: "./"
         image: "service-broker:latest"
         ports:
             - ${HOST_PORT_APP}:${APP_PORT}

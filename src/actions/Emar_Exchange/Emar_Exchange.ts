@@ -102,7 +102,7 @@ export class Emar_Exchange_Execute extends Application_Action {
     this.description = "Executes an endpoint of an Emar";
     this.version = 1;
     this.inputs = {
-      system_id: { required: true },
+      system_name: { required: true },
       endpoint: { required: true },
       hl7: { required: true }
     };
@@ -111,7 +111,7 @@ export class Emar_Exchange_Execute extends Application_Action {
   async run(data) {
     try {
       const action = Get_Emar_Action(data.params.endpoint);
-      data.response.body = await action.exec(data.params.hl7);
+      data.response.body = await action.exec(data);
       data.response.ok = true;
     } catch (err) {
       data.response.ok = false;

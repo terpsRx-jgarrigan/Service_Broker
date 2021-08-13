@@ -1,5 +1,4 @@
 import { action, Action } from "actionhero";
-import * as fs from "fs";
 
 export abstract class JWT_Action extends Action {
 
@@ -26,10 +25,10 @@ action.addMiddleware({
   preProcessor: async(data) => {
     if (data.actionTemplate.jwt_verified) {
       let jwt = require("jsonwebtoken");
-      const RSA_PUBLIC_KEY = fs.readFileSync(process.env.PUBLIC_KEY_FILE);
       try {
-        let jwtString = data.connection.rawConnection.req.headers.jwt;
-        let decode = jwt.verify(jwtString, RSA_PUBLIC_KEY);
+        let jwtString = data.connection.rawConnection.req.headers.authorization;
+        jwtString = jwtString.replace(/^Bearer /,'');
+        let decode = jwt.verify(jwtString, process.env.APP_JWT_SECRET);
         console.log(decode);
       } catch (error) {
         data.response.ok = false;

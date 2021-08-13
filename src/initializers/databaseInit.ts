@@ -11,6 +11,9 @@ export class databaseInitializer extends Initializer {
     this.stopPriority = 1000;
   }
 
+  /**
+   * We want to detail the database connection to be used. 
+   */
   async initialize() {
     api.db_conn_mgr = getConnectionManager();
     api.db_conn_mgr.create({
@@ -19,20 +22,19 @@ export class databaseInitializer extends Initializer {
       port: process.env.MYSQL_PORT,
       username: process.env.MYSQL_USER,
       password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE
-    });
-    api.db_conn_mgr.create({
-      name: "read-only-replica",
-      type: "mysql",
-      host: process.env.MYSQL_READ_ONLY_REPLICA_HOST,
-      port: process.env.MYSQL_READ_ONLY_REPLICA_MYSQL_PORT,
-      username: process.env.MYSQL_READ_ONLY_REPLICA_MYSQL_USER,
-      password: process.env.MYSQL_READ_ONLY_REPLICA_MYSQL_PASSWORD,
-      database: process.env.MYSQL_READ_ONLY_REPLICA_MYSQL_DATABASE
+      database: process.env.MYSQL_DATABASE,
+      entities: [__dirname +"/../entities/*.ts"],
+      autoLoadEntities: true,
+      driver_extra: {"allowPublicKeyRetrieval": true}
     });
   }
 
-  async start() {}
+  async start() {
+    const default_db_conn = api.db_conn_mgr.get("default");
+    if (default_db_conn.isConnected === false) {
+      await default_db_conn.connect();
+    }
+  }
 
   async stop() {}
 }
