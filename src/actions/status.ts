@@ -2,6 +2,15 @@ import { api, id, task, Action, actionheroVersion } from "actionhero";
 import * as path from "path";
 import * as fs from "fs";
 
+// These values are probably good starting points, but you should expect to tweak them for your application
+const maxMemoryAlloted = process.env.maxMemoryAlloted || 500;
+const maxResqueQueueLength = process.env.maxResqueQueueLength || 1000;
+
+enum StatusMessages {
+  healthy = "Node Healthy",
+  unhealthy = "Node Unhealthy",
+}
+
 const packageJSON = JSON.parse(
   fs
     .readFileSync(
@@ -10,9 +19,6 @@ const packageJSON = JSON.parse(
     .toString()
 );
 
-// These values are probably good starting points, but you should expect to tweak them for your application
-const maxMemoryAlloted = process.env.maxMemoryAlloted || 500;
-const maxResqueQueueLength = process.env.maxResqueQueueLength || 1000;
 export class Status extends Action {
   constructor() {
     super();
@@ -25,20 +31,15 @@ export class Status extends Action {
     };
   }
 
-  async run({ connection }) {
-    let nodeStatus: string = connection.localize("Node Healthy");
+  async run() {
+    let nodeStatus = StatusMessages.healthy;
     const problems: string[] = [];
 
     const consumedMemoryMB =
       Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100;
     if (consumedMemoryMB > maxMemoryAlloted) {
-      nodeStatus = connection.localize("Unhealthy");
-      problems.push(
-        connection.localize([
-          "Using more than {{maxMemoryAlloted}} MB of RAM/HEAP",
-          { maxMemoryAlloted: maxMemoryAlloted },
-        ])
-      );
+      nodeStatus = StatusMessages.unhealthy;
+      problems.push(`Using more than ${maxMemoryAlloted} MB of RAM/HEAP`);
     }
 
     let resqueTotalQueueLength = 0;
@@ -50,21 +51,16 @@ export class Status extends Action {
     resqueTotalQueueLength = length;
 
     if (length > maxResqueQueueLength) {
-      nodeStatus = connection.localize("Node Unhealthy");
-      problems.push(
-        connection.localize([
-          "Resque Queues over {{maxResqueQueueLength}} jobs",
-          { maxResqueQueueLength: maxResqueQueueLength },
-        ])
-      );
+      nodeStatus = StatusMessages.unhealthy;
+      problems.push(`Resque Queues over ${maxResqueQueueLength} jobs`);
     }
 
     return {
       id: id,
       actionheroVersion: actionheroVersion,
-      name: packageJSON.name,
-      description: packageJSON.description,
-      version: packageJSON.version,
+      name: packageJSON.name as string,
+      description: packageJSON.description as string,
+      version: packageJSON.version as string,
       uptime: new Date().getTime() - api.bootTime,
       consumedMemoryMB,
       resqueTotalQueueLength,
