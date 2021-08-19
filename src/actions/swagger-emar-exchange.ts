@@ -8,8 +8,8 @@ const parentPackageJSON = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "..", "package.json")).toString()
 );
 const INCLUDED_ROUTES = [
-  '/register',
-  '/authenticate'
+  '/emar-exchange/directory',
+  '/emar-exchange/execute'
 ];
 
 const responses = {
@@ -33,10 +33,10 @@ const responses = {
   },
 };
 
-export class Swagger extends Action {
+export class SwaggerEmarExchagne extends Action {
   constructor() {
     super();
-    this.name = "swagger";
+    this.name = "swagger-emar-exchange";
     this.description = "return API documentation in the OpenAPI specification";
     this.outputExample = {};
   }
@@ -129,7 +129,7 @@ export class Swagger extends Action {
               };
             }),
           responses,
-          security: [{BasicAuth: {type: "basic"}}],
+          security: [{ApiKeyAuth: {type: "apiKey", in: "header", name: "Authorization"}}],
         };
 
         if (!tags.includes(tag)) {
@@ -167,11 +167,16 @@ export class Swagger extends Action {
       paths: swaggerPaths,
 
       securityDefinitions: {
-        BasicAuth: {
-          type: "basic",
+        ApiKeyAuth: {
+          type: "apiKey",
+          in: "header",
+          name: "Authorization"
         }
       },
-      externalDocs: {},
+      externalDocs: {
+        description: "Learn more about Actionhero",
+        url: "https://www.actionherojs.com",
+      },
     };
   }
 }

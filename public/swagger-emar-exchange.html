@@ -11,27 +11,18 @@
       type="text/css"
       href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css"
     />
-    <link rel="stylesheet" href="/public/css/cosmo.css" type="text/css" />
     <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-standalone-preset.js"></script>
     <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
   </head>
 
   <body>
     <div class="container">
-      <br class="row">
-        <br />
-        <div class="col-md-5"></div>
-        <div class="col-md-3">
-            <a href="swagger-emar-exchange.html" class="btn btn-light">Emar Exchange Swagger</a>
-        </div>
-        <div class="col-md-5"></div>
-      </div>
       <div id="swagger-ui" />
     </div>
 
     <script type="text/javascript">
       const SwaggerUI = SwaggerUIBundle({
-        url: "/api/swagger",
+        url: "/api/swagger/emar-exchange",
         dom_id: "#swagger-ui",
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
         plugins: [SwaggerUIBundle.plugins.DownloadUrl],

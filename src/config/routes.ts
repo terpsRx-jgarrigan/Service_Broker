@@ -4,6 +4,7 @@ export const DEFAULT = {
       get: [
         { path: "/status", action: "status" },
         { path: "/swagger", action: "swagger" },
+        { path: "/swagger/emar-exchange", action: "swagger-emar-exchange"},
         { path: "/createChatRoom", action: "createChatRoom" },
         { path: "/register", action: "Register" },
         { path: "/authenticate", action: "Authenticate" },
