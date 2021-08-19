@@ -156,7 +156,8 @@ export class Swagger extends Action {
         ? config.servers.web.allowedRequestHosts[0]
             .replace("https://", "")
             .replace("http://", "")
-        : `localhost:${config.servers.web.port}`,
+        //: `localhost:${config.servers.web.port}`,
+          : process.env.HTTP_HOSTNAME, 
       basePath: `/api/${API_VERSION}`,
       // tags: tags.map((tag) => {
       //   return { name: tag, description: `topic: ${tag}` };
