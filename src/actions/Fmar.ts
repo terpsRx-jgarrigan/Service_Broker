@@ -43,6 +43,9 @@ export class CreateFmar extends Application_Action {
       schedule: data.params.schedule,
       info: data.params.info
     };
+    if (fmar.info === undefined) {
+      fmar.info = {};
+    }
     data.response.body = await fmarRepository.save(fmar);
     data.connection.setStatusCode(201);
     data.response.ok = true;
@@ -91,6 +94,9 @@ export class UpdateFmar extends Application_Action {
       schedule: data.params.schedule,
       info: data.params.info
     };
+    if (fmar.info === undefined) {
+      fmar.info = {};
+    }
     await fmarRepository.update(Number(data.params.fmar_id), fmar);
     data.response.body = await fmarRepository.find({id: Number(data.params.fmar_id)});
     data.response.ok = true;

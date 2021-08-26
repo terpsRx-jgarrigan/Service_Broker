@@ -48,7 +48,7 @@
         <br />
         <br />
         <div class="row">
-          <div class="col-md-12 text-center">
+          <div id="fmarsTableDiv" class="col-md-12 text-center">
             <table id="fmarsTable" class="display" style="width:100%">
               <thead>
                 <tr>
@@ -60,8 +60,7 @@
                   <th> Date of Birth </th>
                   <th> Last 4 SSN </th>
                   <th> Schedule </th>
-                  <!--<th> Info </th>-->
-                  <!--<th> Operations </th>-->
+                  <th></th>
                 </tr>
               </thead>
               <tfoot>
@@ -74,8 +73,7 @@
                   <th> Date of Birth </th>
                   <th> Last 4 SSN </th>
                   <th> Schedule </th>
-                  <!--<th> Info </th>-->
-                  <!--<th> Operations </th>-->
+                  <th></th>
                 </tr>
               </tfoot>
             </table>
@@ -90,6 +88,7 @@
        <!--Data Table-->
        <script type="text/javascript"  src=" https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
        <script type="text/javascript"  src=" https://cdn.datatables.net/buttons/1.2.4/js/dataTables.buttons.min.js"></script>
+       <script type="text/javascript"  src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
    
        <!--Export table buttons-->
        <script type="text/javascript"  src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
@@ -99,43 +98,14 @@
        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.1/js/buttons.print.min.js"></script>
 
     <script type="text/javascript">
-      var editor;
       $(document).ready(function() {
-        editor = new $.fn.dataTable.Editor({
-          ajax: {
-            "url": "/api/fakemar/fmar/update",
-            "type": "POST",
-            "beforeSend": function (xhr) {
-              xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('jwt'));
-            }
-          },
-          table: "#fmarsTable",
-          fields: [ {
-            label: "Fakemar ID",
-            name: "id"
-          }, {
-            label: "Username",
-            name: "username",
-          }, {
-            label: "First Name",
-            name: "firstName",
-          }, {
-            label: "Last Name",
-            name: "lastName",
-          }, {
-            label: "Date of Birth",
-            name: "dob",
-          }, {
-            label: "Last 4 SSN",
-            name: "last_4_ssn",
-          }, {
-            label: "Schedule",
-            name: "schedule",
-          }]
-        });
-        $('#fmarsTable').on('click', 'tbody td:not(:first-child)', function (e) {
-          editor.inline(this);
-        });
+        /**
+         * Don't even run the datatable if we don't have a jwt to try
+         */ 
+        isJWTPresent();
+        /**
+         * Datatable time
+         */
         $('#fmarsTable').DataTable( {
           "dom": "Bfrtip",
           "ajax": {
@@ -146,26 +116,208 @@
             "dataSrc": "body"
           },
           "columns": [
-            { "data": "patient_code" },
-            { "data": "username" },
-            { "data": "firstName" },
-            { "data": "lastName" },
-            { "data": "dob" },
-            { "data": "last_4_ssn" },
-            { "data": "schedule" },
-            //{ "data": "info" }
+            { 
+              "data": "id",
+              "render": function (data, type, row) {
+                return "<form id=\"fmar_"+row.id+"\">"+row.id+"</form>";
+              },
+              "responsivePriority": 0
+            },
+            { 
+              "data": "patient_code",
+              "render": function (data, type, row) {
+                return "<p>\
+                  <input form=\"fmar_"+row.id+"\" type=\"text\" \
+                  value=\""+row.patient_code+"\" \
+                  name=\"patient_code\" \
+                  id=\"patient_code_"+row.id+"\"/></p>";
+              }, 
+              "responsivePriority": 2 
+            },
+            { 
+              "data": "username",
+              "render": function (data, type, row) {
+                return "<p>\
+                  <input form=\"fmar_"+row.id+"\" type=\"text\" \
+                  value=\""+row.username+"\" \
+                  name=\"username\" \
+                  id=\"username_"+row.id+"\"/></p>";
+              }, 
+              "responsivePriority": 2
+            },
+            { 
+              "data": "firstName",
+              "render": function (data, type, row) {
+                return "<p>\
+                  <input form=\"fmar_"+row.id+"\" type=\"text\" \
+                  value=\""+row.firstName+"\" \
+                  name=\"firstName\" \
+                  id=\"firstName_"+row.id+"\"/></p>";
+              },
+              "responsivePriority": 3
+            },
+            { "data": "lastName", 
+              "render": function (data, type, row) {
+                return "<p>\
+                  <input form=\"fmar_"+row.id+"\" type=\"text\" \
+                  value=\""+row.lastName+"\" \
+                  name=\"lastName\" \
+                  id=\"lastName_"+row.id+"\"/></p>";
+              },
+              "responsivePriority": 3
+            },
+            { 
+              "data": "dob",
+              "render": function (data, type, row) {
+                return "<button class=\"btn btn-danger\" onClick=\"resetPII(event, 'dob', "+row.id+")\">Reset</button>";
+              },
+              "responsivePriority": 5
+            },
+            { 
+              "data": "last_4_ssn",
+              "render": function (data, type, row) {
+                return "<button class=\"btn btn-danger\" onClick=\"resetPII(event, 'last_4_ssn', "+row.id+")\">Reset</button>";
+              },
+              "responsivePriority": 5 
+            },
+            { 
+              "data": "schedule",
+              "render": function (data, type, row) {
+                return "<p>\
+                  <input form=\"fmar_"+row.id+"\" type=\"text\" \
+                  value=\""+row.schedule.toString()+"\" \
+                  name=\"schedule\" \
+                  id=\"schedule_"+row.id+"\"/></p>";
+              },
+              "responsivePriority": 4
+            },
+            {
+              "data": null,
+              "render": function (data, type, row) {
+                let func = "update";
+                let btn_txt = "Update";
+                let btn_clr = "warning";
+                if (row.id === 0) {
+                  func = "create";
+                  btn_txt = "Create";
+                  btn_clr = "success";
+                }
+                return "<button class=\"btn btn-"+btn_clr+"\" onClick=\""+func+"("+row.id+")\">"+btn_txt+"</button>";
+              },
+              "responsivePriority": 1
+            }
           ],
           "select": {
             "style": 'os',
             "selector": 'td:first-child'
           },
           "buttons": [
-            { extend: "create", editor: editor },
-            { extend: "edit", editor: editor },
-            { extend: "remove", editor: editor }
-          ]
+            "copy", "excel", "pdf", {
+              "text": "New Fmar", 
+              "action": function (e, dt, node, config) {
+                dt.row.add({
+                  "id": 0,
+                  "patient_code": "",
+                  "username": "",
+                  "firstName": "",
+                  "lastName": "",
+                  "dob": "",
+                  "last_4_ssn": "",
+                  "schedule": []
+                }).draw();
+              }
+            }
+          ],
+          "responsive": {
+            "details": {
+              "type": "column",
+              "target": 0,
+              "display": $.fn.dataTable.Responsive.display.childRow
+            },
+            "breakpoints": [
+              {"name": 'bigdesktop', "width": Infinity},
+              {"name": 'meddesktop', "width": 1480},
+              {"name": 'smalldesktop', "width": 1280},
+              {"name": 'medium', "width": 1188},
+              {"name": 'tabletl', "width": 1024},
+              {"name": 'btwtabllandp', "width": 848},
+              {"name": 'tabletp', "width": 768},
+              {"name": 'mobilel', "width": 480},
+              {"name": 'mobilep', "width": 320}
+            ]
+          }
         });
       });
+      /**
+       * Check's to ensure we have a JWT present
+       * This is an awful way to authorize 
+       */ 
+      function isJWTPresent () {
+        if (localStorage.getItem("jwt") === undefined) {
+          document.getElementById("fmarsTableDiv").innerHTML = "<p> redirecting to login </p>";
+          setTimeout(function() {
+            window.location.href = window.location.protocol + "//" + window.location.hostname;
+          }, 200);
+        }
+      }
+      /**
+       * Give the user a chance to update some PII
+       */
+      function resetPII(event, type, id) {
+        event.target.parentElement.innerHTML = "<p><input form=\"fmar_"+id+"\" \
+          type=\"text\" \
+          name=\""+type+"\" \
+          id=\""+type+"_"+id+"\"/></p>";
+      }
+      /**
+       * Update a row
+       */
+      async function update(id) {
+        const data = new FormData(document.getElementById("fmar_"+id));
+        let entries = Object.fromEntries(data.entries());
+        var table = $("#fmarsTable").DataTable();
+        var tableData = table.row(id - 1).data();
+        if (entries.fmar_id === undefined) {
+          entries.fmar_id = tableData.id;
+        }
+        if (entries.dob === undefined) {
+          entries.dob = tableData.dob;
+        }
+        if (entries.last_4_ssn === undefined) {
+          entries.last_4_ssn = tableData.last_4_ssn;
+        }
+        let response = await fetch ('/api/fakemar/fmars/update', {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json;chart=utf-8',
+            'Authorization': 'Bearer ' + localStorage.getItem("jwt")
+          },
+          body: JSON.stringify(entries)
+        });
+      }
+      async function create(id) {
+        const data = new FormData(document.getElementById("fmar_"+id));
+        let entries = Object.fromEntries(data.entries());
+        var table = $("#fmarsTable").DataTable();
+        var tableData = table.row(id - 1).data();
+        if (entries.dob === undefined) {
+          alert("You must provide a date of birth");
+          return;
+        }
+        if (entries.last_4_ssn === undefined) {
+          alert("You must provide the last 4 of the ssn");
+          return;
+        }
+        let response = await fetch ('/api/fakemar/fmars/create', {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json;chart=utf-8',
+            'Authorization': 'Bearer ' + localStorage.getItem("jwt")
+          },
+          body: JSON.stringify(entries)
+        });
+        table.row(0).data(response.body).draw();
+      }
     </script>
   </body>
 </html>
