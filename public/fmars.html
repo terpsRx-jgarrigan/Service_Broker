@@ -185,7 +185,7 @@
               "render": function (data, type, row) {
                 return "<p>\
                   <input form=\"fmar_"+row.id+"\" type=\"text\" \
-                  value=\""+row.schedule.toString()+"\" \
+                  value=\""+row.schedule+"\" \
                   name=\"schedule\" \
                   id=\"schedule_"+row.id+"\"/></p>";
               },
@@ -194,6 +194,7 @@
             {
               "data": null,
               "render": function (data, type, row) {
+                let return_text = "";
                 let func = "update";
                 let btn_txt = "Update";
                 let btn_clr = "warning";
@@ -201,8 +202,11 @@
                   func = "create";
                   btn_txt = "Create";
                   btn_clr = "success";
+                } else {
+                  return_text +="<button class=\"btn btn-sm btn-danger\" onClick=\"remove("+row.id+")\">Remove</button>";
                 }
-                return "<button class=\"btn btn-"+btn_clr+"\" onClick=\""+func+"("+row.id+")\">"+btn_txt+"</button>";
+                return_text += "<br /><button class=\"btn btn-sm btn-"+btn_clr+"\" onClick=\""+func+"("+row.id+")\">"+btn_txt+"</button>";
+                return return_text;
               },
               "responsivePriority": 1
             }
@@ -276,7 +280,7 @@
         const data = new FormData(document.getElementById("fmar_"+id));
         let entries = Object.fromEntries(data.entries());
         var table = $("#fmarsTable").DataTable();
-        var tableData = table.row(id - 1).data();
+        var tableData = table.rows(function (idx, data, node) { return data.id === id; }).data()[0];
         if (entries.fmar_id === undefined) {
           entries.fmar_id = tableData.id;
         }
@@ -294,6 +298,7 @@
           },
           body: JSON.stringify(entries)
         });
+        table.draw();
       }
       async function create(id) {
         const data = new FormData(document.getElementById("fmar_"+id));
@@ -308,15 +313,35 @@
           alert("You must provide the last 4 of the ssn");
           return;
         }
-        let response = await fetch ('/api/fakemar/fmars/create', {
+        fetch ('/api/fakemar/fmars/create', {
           method: "POST",
           headers: {
-            'Content-Type': 'application/json;chart=utf-8',
+            'Content-Type': 'application/json;char=utf-8',
             'Authorization': 'Bearer ' + localStorage.getItem("jwt")
           },
           body: JSON.stringify(entries)
+        })
+        .then(response => response.json())
+        .then(response => { 
+          if (response.ok) {
+            $("#fmarsTable").DataTable().ajax.reload();
+          }
         });
-        table.row(0).data(response.body).draw();
+        
+        //await table.row(':eq(0)').data(response.body.getReader()).draw();
+      }
+      async function remove(id) {
+        let response = await fetch ('/api/fakemar/fmars/delete/'+id, {
+          method: "GET",
+          headers: {
+            'Content-Type': 'application/json;char=utf-8',
+            'Authorization': 'Bearer ' + localStorage.getItem("jwt")
+          }
+        });
+        let table = $("#fmarsTable").DataTable();
+        table.rows(function (idx, data, node) {
+          return data.id === id;
+        }).remove().draw();
       }
     </script>
   </body>
