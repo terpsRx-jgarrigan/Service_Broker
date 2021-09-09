@@ -165,7 +165,7 @@ export class Emar_Exchange_Execute extends Application_Action {
         required: false,
         formatter: (param) => {
           const parser = new HL7_Parse();
-          return parser.inflate(decodeURIComponent(param));
+          return parser.inflate(param);
         } 
       }
     };
@@ -178,12 +178,18 @@ export class Emar_Exchange_Execute extends Application_Action {
           hl7: []
         }
       };
-      if (data.connection.rawConnection.req.headers.hl7transactionheader != undefined &&
-          data.connection.rawConnection.req.headers.hl7body != undefined) {
-        const parser = new HL7_Parse();
-        pass_obj.params.hl7 = parser.inflate(data.connection.rawConnection.req.headers.hl7transactionheader + data.connection.rawConnection.req.headers.hl7body);
-      } else {
+      let hl7_provided = false;
+      if (data.params.hl7 != undefined) {
+        hl7_provided = true;
         pass_obj.params.hl7 = data.params.hl7;
+      } else if (data.connection.rawConnection.req.headers.hl7transactionheader != undefined &&
+          data.connection.rawConnection.req.headers.hl7body != undefined) {
+        hl7_provided = true;
+        const parser = new HL7_Parse();
+        pass_obj.params.hl7 = parser.inflate(data.connection.rawConnection.req.headers.hl7transactionheader+ "\n" + data.connection.rawConnection.req.headers.hl7body);
+      } else {
+        data.connection.setStatusCode(401);
+        throw new Error("hl7 missing");
       }
       const action = Get_Emar_Action(data.params.endpoint);
       data.response.body = await action.exec(pass_obj);

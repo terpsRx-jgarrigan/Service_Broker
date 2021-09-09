@@ -47,7 +47,7 @@ export class User_Registration extends FakeMAR_Action {
   async exec (data?: any) {
     const hl7 = data.params.hl7;
     const fmarRepository = getRepository(Fmar);
-    const username = hl7[0][20][0];
+    const username = hl7[1][2][0];
     const fmar = await fmarRepository.find({ where: {username: username}});
     let fmar_id = "";
     let response_code = "AA";
@@ -58,8 +58,8 @@ export class User_Registration extends FakeMAR_Action {
     } else {
       fmar_id = String(fmar[0].id);
     }
-    return { hl7: encodeURIComponent("MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||ADT^A02|-1||2.5||||||ASCII|%250A|&#xD; \
-    MSA|"+response_code+"|"+response_msg+"|"+fmar_id+"|&#xD;") };
+    return { hl7: "MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||ADT^A02|-1||2.5||||||ASCII|%250A|&#xD; \
+    MSA|"+response_code+"|"+response_msg+"|"+fmar_id+"|&#xD;" };
   }
 }
 
@@ -82,25 +82,25 @@ export class Consumer_Registration extends FakeMAR_Action {
     const fmarRepository = getRepository(Fmar);
     let response_code = "AA";
     let response_msg = "Accepted";
-    let return_hl7 = "MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||ADT^A01|-1||2.5||||||ASCII|%250A|&#xD; \
+    let return_hl7 = "MSH||FakeMAR|MHP|Medherent|"+hl7[0][3][0]+"|"+this.todayString+"||ADT^A01|-1||2.5||||||ASCII|%250A|&#xD; \
     ";
     const aesjs = require('aes-js');
     const aesCtr = new aesjs.ModeOfOperation.ctr(process.env.APP_PII_SECRET.split(',').map(Number), new aesjs.Counter(5));
-    const dobBytes = aesjs.utils.utf8.toBytes(hl7[0][24][0]);
-    const last_4_ssnBytes = aesjs.utils.utf8.toBytes(hl7[0][40][0]);
+    const dobBytes = aesjs.utils.utf8.toBytes(hl7[1][6][0]);
+    const last_4_ssnBytes = aesjs.utils.utf8.toBytes(hl7[1][22][0]);
     const dobEncryptBytes = aesCtr.encrypt(dobBytes);
     const last_4_ssnEncryptBytes = aesCtr.encrypt(last_4_ssnBytes);
     const dobEncryptedHex = aesjs.utils.hex.fromBytes(dobEncryptBytes);
     const last_4_ssnEncryptedHex = aesjs.utils.hex.fromBytes(last_4_ssnEncryptBytes);
-    const fmar = await fmarRepository.find({ where: {lastName: hl7[0][23][0], dob: dobEncryptedHex, last_4_ssn: last_4_ssnEncryptedHex}});
+    const fmar = await fmarRepository.find({ where: {lastName: hl7[1][5][0], dob: dobEncryptedHex, last_4_ssn: last_4_ssnEncryptedHex}});
     if (fmar.length === 0) {
       response_code = "ER1";
       response_msg = "Consumer not found";
       return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD;";
-      return { hl7: encodeURIComponent(return_hl7) };
+      return { hl7: return_hl7 };
     }
     return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD; \
-    PID|1||"+fmar[0].patient_code+"|"+fmar[0].id+"|"+fmar[0].lastName+"|"+hl7[0][24][0]+"||||||||||||||||"+hl7[0][40][0]+"||&#xD; \
+    PID|1||"+fmar[0].patient_code+"|"+fmar[0].id+"|"+fmar[0].lastName+"|"+hl7[1][6][0]+"||||||||||||||||"+hl7[1][22][0]+"||&#xD; \
     PV1|1||FakeMAR ^^^Annapolis|&#xD; \
     ";
     if (fmar[0].schedule.length > 0) {
@@ -109,7 +109,7 @@ export class Consumer_Registration extends FakeMAR_Action {
         ";
       }
     }
-    return { hl7: encodeURIComponent(return_hl7) };
+    return { hl7: return_hl7 };
   }
 }
 
@@ -134,14 +134,14 @@ then again whenever the dispense times change.";
     const fmarRepository = getRepository(Fmar);
     let response_code = "AA";
     let response_msg = "Accepted";
-    let return_hl7 = "MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||ADT^A01|-1||2.5||||||ASCII|%250A|&#xD; \
+    let return_hl7 = "MSH||FakeMAR|MHP|Medherent|"+hl7[0][3][0]+"|"+this.todayString+"||ADT^A01|-1||2.5||||||ASCII|%250A|&#xD; \
     ";
-    const fmar = await fmarRepository.find({ where: {id: hl7[0][22][0]}});
+    const fmar = await fmarRepository.find({ where: {id: hl7[1][4][0]}});
     if (fmar.length === 0) {
       response_code = "ER1";
       response_msg = "Consumer not found";
       return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD;";
-      return { hl7: encodeURIComponent(return_hl7) };
+      return { hl7: return_hl7 };
     }
     return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD; \
     PID|1|||"+fmar[0].id+"||||||||||||||||||||&#xD; \
@@ -153,7 +153,7 @@ then again whenever the dispense times change.";
         ";
       }
     }
-    return { hl7: encodeURI(return_hl7) };
+    return { hl7: return_hl7 };
   }
 }
 
@@ -173,8 +173,8 @@ export class Medpass_Event extends FakeMAR_Action {
 
   async exec(data) {
     const hl7 = data.params.hl7;
-    return { hl7: encodeURIComponent("MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||RDS^O13|-1||2.5||||||ASCII|%250A|&#xD; \
-    MSA|AA|Accepted|&#xD;") };
+    return { hl7: "MSH||FakeMAR|MHP|Medherent|"+hl7[0][3][0]+"|"+this.todayString+"||RDS^O13|-1||2.5||||||ASCII|%250A|&#xD; \
+    MSA|AA|Accepted|&#xD;" };
   }
 }
 
@@ -194,7 +194,7 @@ FakeMAR - Respective header segment only.";
   }
 
   async exec (data) {
-    return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
+    return { hl7: "MSA|AA|Mock Response" };
   }
 }
 
@@ -213,7 +213,7 @@ export class On_Leave extends FakeMAR_Action {
   }
 
   async exec (data) {
-    return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
+    return { hl7: "MSA|AA|Mock Response" };
   }
 }
 
@@ -234,7 +234,7 @@ Suspend Mode, that dispense operations are no longer suspended.";
   }
 
   async exec (data) {
-    return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
+    return { hl7: "MSA|AA|Mock Response" };
   }
 }
 
@@ -257,7 +257,7 @@ dose time to override.";
   }
 
   async exec (data) {
-    return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
+    return { hl7: "MSA|AA|Mock Response" };
   }
 }
 
@@ -276,6 +276,6 @@ export class Deactivate_User extends FakeMAR_Action {
   }
 
   async exec (data) {
-    return { hl7: encodeURIComponent("MSA|AA|Mock Response") };
+    return { hl7: "MSA|AA|Mock Response" };
   }
 }
