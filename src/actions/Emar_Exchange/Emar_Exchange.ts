@@ -2,6 +2,63 @@ import { api } from "actionhero";
 import { Emar_Exchange_Action } from "../Parents/Emar_Exchange_Action";
 import { Application_Action } from "./../Parents/Application_Action";
 
+/**
+ * Tool to interpret HL7 text
+ */
+class HL7_Parse {
+  
+  /**
+   * Splits the string on a provided delimiter 
+   * @param string 
+   * @param delimiter 
+   * @returns 
+   */
+  private split_on_char(string, delimiter) {
+    return ((string.search(delimiter) > -1) ? string.split(delimiter) : string);
+  }
+
+  /**
+   * Orchestrates the deconstruction of the provided segment
+   * @param string 
+   * @returns 
+   */
+  private parse_segment(string) {
+    let array = this.split_on_char(string, "|");
+    for (let i = 0; i < array.length; i++) {
+      array[i] = this.split_on_char(array[i], "^");
+      if (typeof array[i] === 'object') {
+        for (let j = 0; j < array[i].length; j++) {
+          array[i][j] = this.split_on_char(array[i][j], "~");
+          if (typeof array[i][j] === 'object') {
+            for (let k = 0; k < array[i][j].length; k++) {
+              array[i][j][k] = this.split_on_char(array[i][j][k], /\\/);
+              if (typeof array[i][j][k] === 'object') {
+                for (let l = 0; l < array[i][j][k].length; l++) {
+                  array[i][j][k][l] = this.split_on_char(array[i][j][k][l], "&");
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return array;
+  }
+
+  /**
+   * Orchestrates the deconstruction of the provided message
+   * @param hl7 
+   * @returns 
+   */
+  public inflate(hl7) {
+    let message = hl7.split(/\r\n|\n\r|\n|\r/g);
+    for(let i = 0; i < message.length; i++) {
+      message[i] = this.parse_segment(message[i]);
+    }
+    return message;
+  }
+}
+
 class Exchange_Application {
   public id: Number;
   public name: String;
@@ -104,18 +161,36 @@ export class Emar_Exchange_Execute extends Application_Action {
     this.inputs = {
       system_name: { required: true },
       endpoint: { required: true },
-      hl7: { required: true }
+      hl7: { 
+        required: false,
+        formatter: (param) => {
+          const parser = new HL7_Parse();
+          return parser.inflate(decodeURIComponent(param));
+        } 
+      }
     };
   }
 
   async run(data) {
     try {
+      let pass_obj = {
+        params: {
+          hl7: []
+        }
+      };
+      if (data.connection.rawConnection.req.headers.hl7transactionheader != undefined &&
+          data.connection.rawConnection.req.headers.hl7body != undefined) {
+        const parser = new HL7_Parse();
+        pass_obj.params.hl7 = parser.inflate(data.connection.rawConnection.req.headers.hl7transactionheader + data.connection.rawConnection.req.headers.hl7body);
+      } else {
+        pass_obj.params.hl7 = data.params.hl7;
+      }
       const action = Get_Emar_Action(data.params.endpoint);
-      data.response.body = await action.exec(data);
+      data.response.body = await action.exec(pass_obj);
       data.response.ok = true;
     } catch (err) {
       data.response.ok = false;
-      data.response.body = err;
+      data.response.body = err.message;
     }
   }
 }

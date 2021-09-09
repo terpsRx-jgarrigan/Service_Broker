@@ -1,71 +1,12 @@
 import { Emar_Exchange_Action } from "./../../Parents/Emar_Exchange_Action";
 import { getRepository, Repository } from "typeorm";
 import { Fmar } from "./../../../entities/Fmar";
-import { alterTableFakemarFmarsAddUsernameField1628801124049 } from "../../../migrations/1628801124049-alter_table_fakemar_fmars_add_username_field";
-
-/**
- * Tool to interpret HL7 text
- */
-class HL7_Parse {
-  
-  /**
-   * Splits the string on a provided delimiter 
-   * @param string 
-   * @param delimiter 
-   * @returns 
-   */
-  private split_on_char(string, delimiter) {
-    return ((string.search(delimiter) > -1) ? string.split(delimiter) : string);
-  }
-
-  /**
-   * Orchestrates the deconstruction of the provided segment
-   * @param string 
-   * @returns 
-   */
-  private parse_segment(string) {
-    let array = this.split_on_char(string, "|");
-    for (let i = 0; i < array.length; i++) {
-      array[i] = this.split_on_char(array[i], "^");
-      if (typeof array[i] === 'object') {
-        for (let j = 0; j < array[i].length; j++) {
-          array[i][j] = this.split_on_char(array[i][j], "~");
-          if (typeof array[i][j] === 'object') {
-            for (let k = 0; k < array[i][j].length; k++) {
-              array[i][j][k] = this.split_on_char(array[i][j][k], /\\/);
-              if (typeof array[i][j][k] === 'object') {
-                for (let l = 0; l < array[i][j][k].length; l++) {
-                  array[i][j][k][l] = this.split_on_char(array[i][j][k][l], "&");
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return array;
-  }
-
-  /**
-   * Orchestrates the deconstruction of the provided message
-   * @param hl7 
-   * @returns 
-   */
-  public inflate(hl7) {
-    let message = hl7.split(/\r\n|\n\r|\n|\r/g);
-    for(let i = 0; i < message.length; i++) {
-      message[i] = this.parse_segment(message[i]);
-    }
-    return message;
-  }
-}
 
 /**
  * Defines the class properties for an Emar Exchange registered interface
  */
 abstract class FakeMAR_Action extends Emar_Exchange_Action {
 
-  parser: HL7_Parse;
   /**
    * YYYYmmddHHiiss
    */
@@ -85,7 +26,6 @@ abstract class FakeMAR_Action extends Emar_Exchange_Action {
       String(today.getHours()) +
       String(today.getMinutes()) +
       String(today.getSeconds());
-    this.parser = new HL7_Parse();
   }
 }
 
@@ -98,18 +38,14 @@ export class User_Registration extends FakeMAR_Action {
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
       hl7: {
-        required: true,
-        formatter: (param) => {
-          const parser = new HL7_Parse();
-          return parser.inflate(decodeURIComponent(param));
-        }
+        required: true
       }
     };
     this.version = 1;
   }
 
   async exec (data?: any) {
-    const hl7 = this.parser.inflate(decodeURIComponent(data.params.hl7));
+    const hl7 = data.params.hl7;
     const fmarRepository = getRepository(Fmar);
     const username = hl7[0][20][0];
     const fmar = await fmarRepository.find({ where: {username: username}});
@@ -135,18 +71,14 @@ export class Consumer_Registration extends FakeMAR_Action {
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
       hl7: {
-        required: true,
-        formatter: (param) => {
-          const parser = new HL7_Parse();
-          return parser.inflate(decodeURIComponent(param));
-        }
+        required: true
       }
     };
     this.version = 1;
   }
 
   async exec (data) {
-    const hl7 = this.parser.inflate(decodeURIComponent(data.params.hl7));
+    const hl7 = data.params.hl7;
     const fmarRepository = getRepository(Fmar);
     let response_code = "AA";
     let response_msg = "Accepted";
@@ -191,18 +123,14 @@ then again whenever the dispense times change.";
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
       hl7: {
-        required: true,
-        formatter: (param) => {
-          const parser = new HL7_Parse();
-          return parser.inflate(decodeURIComponent(param));
-        }
+        required: true
       }
     };
     this.version = 1;
   }
 
   async exec (data) {
-    const hl7 = this.parser.inflate(decodeURIComponent(data.params.hl7));
+    const hl7 = data.params.hl7;
     const fmarRepository = getRepository(Fmar);
     let response_code = "AA";
     let response_msg = "Accepted";
@@ -237,18 +165,14 @@ export class Medpass_Event extends FakeMAR_Action {
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
       hl7: {
-        required: true,
-        formatter: (param) => {
-          const parser = new HL7_Parse();
-          return parser.inflate(decodeURIComponent(param));
-        }
+        required: true
       }
     };
     this.version = 1;
   }
 
   async exec(data) {
-    const hl7 = this.parser.inflate(decodeURIComponent(data.params.hl7));
+    const hl7 = data.params.hl7;
     return { hl7: encodeURIComponent("MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||RDS^O13|-1||2.5||||||ASCII|%250A|&#xD; \
     MSA|AA|Accepted|&#xD;") };
   }
@@ -263,11 +187,7 @@ FakeMAR - Respective header segment only.";
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
       hl7: {
-        required: true,
-        formatter: (param) => {
-          const parser = new HL7_Parse();
-          return parser.inflate(decodeURIComponent(param));
-        }
+        required: true
       }
     };
     this.version = 1;
@@ -286,11 +206,7 @@ export class On_Leave extends FakeMAR_Action {
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
       hl7: {
-        required: true,
-        formatter: (param) => {
-          const parser = new HL7_Parse();
-          return parser.inflate(decodeURIComponent(param));
-        }
+        required: true
       }
     };
     this.version = 1;
@@ -311,11 +227,7 @@ Suspend Mode, that dispense operations are no longer suspended.";
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
       hl7: {
-        required: true,
-        formatter: (param) => {
-          const parser = new HL7_Parse();
-          return parser.inflate(decodeURIComponent(param));
-        }
+        required: true
       }
     };
     this.version = 1;
@@ -338,11 +250,7 @@ dose time to override.";
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
       hl7: {
-        required: true,
-        formatter: (param) => {
-          const parser = new HL7_Parse();
-          return parser.inflate(decodeURIComponent(param));
-        }
+        required: true
       }
     };
     this.version = 1;
@@ -361,11 +269,7 @@ export class Deactivate_User extends FakeMAR_Action {
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
       hl7: {
-        required: true,
-        formatter: (param) => {
-          const parser = new HL7_Parse();
-          return parser.inflate(decodeURIComponent(param));
-        }
+        required: true
       }
     };
     this.version = 1;
