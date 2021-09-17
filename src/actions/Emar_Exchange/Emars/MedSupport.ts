@@ -30,10 +30,10 @@ abstract class MedSupport_Action extends Emar_Exchange_Action {
 }
 
 // Actions that Medherent will call
-export class User_Registration extends MedSupport_Action {
+export class MS_User_Registration extends MedSupport_Action {
   constructor() {
     super();
-    this.name = "RegisterUser";
+    this.name = "MS_RegisterUser";
     this.description = "Allows Medherent to check whether a user attempting to log in is known to MedSupport";
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
@@ -63,10 +63,10 @@ export class User_Registration extends MedSupport_Action {
   }
 }
 
-export class Consumer_Registration extends MedSupport_Action {
+export class MS_Consumer_Registration extends MedSupport_Action {
   constructor() {
     super();
-    this.name = "RegisterConsumer";
+    this.name = "MS_RegisterConsumer";
     this.description = "Registers a consumer in MedSupport. MedSupport returns the Consumer Id to Medherent";
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
@@ -113,10 +113,10 @@ export class Consumer_Registration extends MedSupport_Action {
   }
 }
 
-export class Consumer_Dispense_Times extends MedSupport_Action {
+export class MS_Consumer_Dispense_Times extends MedSupport_Action {
   constructor() {
     super();
-    this.name = "GetDispenseTimes";
+    this.name = "MS_GetDispenseTimes";
     this.description = "MedSupport will notify Medherent of current dispense times. \
 This will happen when the Consumer is first properly registered in MedSupport, and \
 then again whenever the dispense times change.";
@@ -157,10 +157,10 @@ then again whenever the dispense times change.";
   }
 }
 
-export class Medpass_Event extends MedSupport_Action {
+export class MS_Medpass_Event extends MedSupport_Action {
   constructor() {
     super();
-    this.name = "MedPassEvent";
+    this.name = "MS_MedPassEvent";
     this.description = "Normal Machine dispense event ";
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
@@ -178,10 +178,10 @@ export class Medpass_Event extends MedSupport_Action {
   }
 }
 
-export class Contact_Information extends MedSupport_Action {
+export class MS_Contact_Information extends MedSupport_Action {
   constructor() {
     super();
-    this.name = "contact";
+    this.name = "MS_contact";
     this.description = "Pass support contact information between Medherent and \
 MedSupport - Respective header segment only.";
     this.outputExample = { hl7: "URL encoded response" };
@@ -198,10 +198,10 @@ MedSupport - Respective header segment only.";
   }
 }
 
-export class On_Leave extends MedSupport_Action {
+export class MS_On_Leave extends MedSupport_Action {
   constructor() {
     super();
-    this.name = "SetAwayStatus";
+    this.name = "MS_SetAwayStatus";
     this.description = "Pass information to MedSupport regarding a leave of absence from physical contact from the vending machine. The minimum away period is one day";
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
@@ -217,10 +217,10 @@ export class On_Leave extends MedSupport_Action {
   }
 }
 
-export class Suspend_Mode extends MedSupport_Action {
+export class MS_Suspend_Mode extends MedSupport_Action {
   constructor() {
     super();
-    this.name = "SetSuspendStatus";
+    this.name = "MS_SetSuspendStatus";
     this.description = "Updates MedSupport that a consumer/device has been put into \
 Suspend Mode and dispense operations are suspended, or a consumer/device in \
 Suspend Mode, that dispense operations are no longer suspended.";
@@ -239,10 +239,10 @@ Suspend Mode, that dispense operations are no longer suspended.";
 }
 
 // Actions that will call Medherent
-export class Override_Dispense extends MedSupport_Action {
+export class MS_Override_Dispense extends MedSupport_Action {
   constructor() {
     super();
-    this.name = "Override_Dispense";
+    this.name = "MS_Override_Dispense";
     this.description = "Overrides are particular dose time for immediate dispense - User \
 overrides one of current day's normal dispensing time. Override will be initiated \
 from either MedSupport or Medherent Web and will identify the Consumer and their respective \
@@ -261,10 +261,10 @@ dose time to override.";
   }
 }
 
-export class Deactivate_User extends MedSupport_Action {
+export class MS_Deactivate_User extends MedSupport_Action {
   constructor() {
     super();
-    this.name = "Deactivate_User";
+    this.name = "MS_Deactivate_User";
     this.description = "Informs Medherent when a MedSupport user is deactivated.";
     this.outputExample = { hl7: "URL encoded response" };
     this.inputs = {
