@@ -51,7 +51,7 @@ class HL7_Parse {
    * @returns 
    */
   public inflate(hl7) {
-    let message = hl7.split(/\r\n|\n\r|\n|\r/g);
+    let message = hl7.split(/\r\n|\n\r|\n|\r|%0A/g);
     for(let i = 0; i < message.length; i++) {
       message[i] = this.parse_segment(message[i]);
     }
