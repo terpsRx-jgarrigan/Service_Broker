@@ -11,6 +11,7 @@
       "aes-js": "^3.1.2",
       "bcrypt": "^5.0.1",
       "crypto": "^1.0.1",
+      "dayjs": "^1.10.7",
       "dotenv": "latest",
       "ioredis": "latest",
       "ioredis-mock": "latest",

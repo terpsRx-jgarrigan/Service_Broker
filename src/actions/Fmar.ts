@@ -77,7 +77,10 @@ export class UpdateFmar extends Application_Action {
     const aesCtr = new aesjs.ModeOfOperation.ctr(
       process.env.APP_PII_SECRET.split(',').map(Number), 
       new aesjs.Counter(5));
-    const dobBytes = aesjs.utils.utf8.toBytes(data.params.dob);
+    const dob = data.params.dob;
+    const dayjs = require('dayjs');
+    const formatted_dob = dayjs(dob).format('YYYYMMDDHHmmss');
+    const dobBytes = aesjs.utils.utf8.toBytes(formatted_dob);
     const last_4_ssnBytes = aesjs.utils.utf8.toBytes(data.params.last_4_ssn);
     const dobEncryptBytes = aesCtr.encrypt(dobBytes);
     const last_4_ssnEncryptBytes = aesCtr.encrypt(last_4_ssnBytes);

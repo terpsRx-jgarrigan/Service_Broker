@@ -268,8 +268,17 @@
        * Give the user a chance to update some PII
        */
       function resetPII(event, type, id) {
+        let input_type = "text";
+        switch (type) {
+          case 'dob':
+            input_type = "date";
+            break;
+          default:
+            //nothing to do 
+            break;
+        }
         event.target.parentElement.innerHTML = "<p><input form=\"fmar_"+id+"\" \
-          type=\"text\" \
+          type=\""+input_type+"\" \
           name=\""+type+"\" \
           id=\""+type+"_"+id+"\"/></p>";
       }

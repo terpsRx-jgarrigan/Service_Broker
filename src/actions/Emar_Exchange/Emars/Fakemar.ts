@@ -86,6 +86,7 @@ export class Consumer_Registration extends FakeMAR_Action {
     ";
     const aesjs = require('aes-js');
     const aesCtr = new aesjs.ModeOfOperation.ctr(process.env.APP_PII_SECRET.split(',').map(Number), new aesjs.Counter(5));
+    //todo 
     const dobBytes = aesjs.utils.utf8.toBytes(hl7[1][6][0]);
     const last_4_ssnBytes = aesjs.utils.utf8.toBytes(hl7[1][22][0]);
     const dobEncryptBytes = aesCtr.encrypt(dobBytes);
