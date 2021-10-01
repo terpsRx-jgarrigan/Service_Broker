@@ -10,7 +10,7 @@ export abstract class JWT_Action extends Action {
   constructor(){
     super();
     this.name = "JWT_Action";
-    this.description = "Adds middleware to ensure a vaild JWT token was received";
+    this.description = "Adds middleware to ensure a valid JWT token was received";
   }
 
   async run (data?: any) {}
