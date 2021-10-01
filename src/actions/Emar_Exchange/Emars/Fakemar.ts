@@ -58,8 +58,7 @@ export class User_Registration extends FakeMAR_Action {
     } else {
       fmar_id = String(fmar[0].id);
     }
-    return { hl7: "MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||ADT^A02|-1||2.5||||||ASCII|%250A|&#xD; \
-    MSA|"+response_code+"|"+response_msg+"|"+fmar_id+"|&#xD;" };
+    return { hl7: "MSH||FakeMAR|MHP|Medherent|"+hl7[0][5]+"|"+this.todayString+"||ADT^A02|-1||2.5||||||ASCII|%250A|&#xD;\nMSA|"+response_code+"|"+response_msg+"|"+fmar_id+"|&#xD;" };
   }
 }
 
@@ -82,8 +81,7 @@ export class Consumer_Registration extends FakeMAR_Action {
     const fmarRepository = getRepository(Fmar);
     let response_code = "AA";
     let response_msg = "Accepted";
-    let return_hl7 = "MSH||FakeMAR|MHP|Medherent|"+hl7[0][3][0]+"|"+this.todayString+"||ADT^A01|-1||2.5||||||ASCII|%250A|&#xD; \
-    ";
+    let return_hl7 = "MSH||FakeMAR|MHP|Medherent|"+hl7[0][3][0]+"|"+this.todayString+"||ADT^A01|-1||2.5||||||ASCII|%250A|&#xD;\n";
     const aesjs = require('aes-js');
     const aesCtr = new aesjs.ModeOfOperation.ctr(process.env.APP_PII_SECRET.split(',').map(Number), new aesjs.Counter(5));
     //todo 
@@ -100,14 +98,11 @@ export class Consumer_Registration extends FakeMAR_Action {
       return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD;";
       return { hl7: return_hl7 };
     }
-    return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD; \
-    PID|1||"+fmar[0].patient_code+"|"+fmar[0].id+"|"+fmar[0].lastName+"|"+hl7[1][6][0]+"||||||||||||||||"+hl7[1][22][0]+"||&#xD; \
-    PV1|1||FakeMAR ^^^Annapolis|&#xD; \
-    ";
-    if (fmar[0].schedule.length > 0) {
-      for (let i = 0; i < fmar[0].schedule.length; i++) {
-        return_hl7 += "TQ1|"+i+"|||"+fmar[0].schedule[i]+"|||&#xD; \
-        ";
+    return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD;\nPID|1||"+fmar[0].patient_code+"|"+fmar[0].id+"|"+fmar[0].lastName+"|"+hl7[1][6][0]+"||||||||||||||||"+hl7[1][22][0]+"||&#xD;\nPV1|1||FakeMAR ^^^Annapolis|&#xD;";
+    const schedule = fmar[0].schedule.split(',');
+    if (schedule.length > 0) {
+      for (let i = 0; i < schedule.length; i++) {
+        return_hl7 += "TQ1|"+i+"|||"+schedule[i]+"|||&#xD;\n";
       }
     }
     return { hl7: return_hl7 };
@@ -135,8 +130,7 @@ then again whenever the dispense times change.";
     const fmarRepository = getRepository(Fmar);
     let response_code = "AA";
     let response_msg = "Accepted";
-    let return_hl7 = "MSH||FakeMAR|MHP|Medherent|"+hl7[0][3][0]+"|"+this.todayString+"||ADT^A01|-1||2.5||||||ASCII|%250A|&#xD; \
-    ";
+    let return_hl7 = "MSH||FakeMAR|MHP|Medherent|"+hl7[0][3][0]+"|"+this.todayString+"||ADT^A01|-1||2.5||||||ASCII|%250A|&#xD;\n";
     const fmar = await fmarRepository.find({ where: {id: hl7[1][4][0]}});
     if (fmar.length === 0) {
       response_code = "ER1";
@@ -144,14 +138,11 @@ then again whenever the dispense times change.";
       return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD;";
       return { hl7: return_hl7 };
     }
-    return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD; \
-    PID|1|||"+fmar[0].id+"||||||||||||||||||||&#xD; \
-    &#xD; \
-    ";
-    if (fmar[0].schedule.length > 0) {
-      for (let i = 0; i < fmar[0].schedule.length; i++) {
-        return_hl7 += "TQ1|"+i+"|||"+fmar[0].schedule[i]+"|||&#xD; \
-        ";
+    return_hl7 += "MSA|"+response_code+"|"+response_msg+"|&#xD;\nPID|1|||"+fmar[0].id+"||||||||||||||||||||&#xD;\n";
+    const schedule = fmar[0].schedule.split(',');
+    if (schedule.length > 0) {
+      for (let i = 0; i < schedule.length; i++) {
+        return_hl7 += "TQ1|"+i+"|||"+schedule[i]+"|||&#xD;\n";
       }
     }
     return { hl7: return_hl7 };
@@ -174,8 +165,7 @@ export class Medpass_Event extends FakeMAR_Action {
 
   async exec(data) {
     const hl7 = data.params.hl7;
-    return { hl7: "MSH||FakeMAR|MHP|Medherent|"+hl7[0][3][0]+"|"+this.todayString+"||RDS^O13|-1||2.5||||||ASCII|%250A|&#xD; \
-    MSA|AA|Accepted|&#xD;" };
+    return { hl7: "MSH||FakeMAR|MHP|Medherent|"+hl7[0][3][0]+"|"+this.todayString+"||RDS^O13|-1||2.5||||||ASCII|%250A|&#xD;\nMSA|AA|Accepted|&#xD;" };
   }
 }
 
